@@ -79,7 +79,8 @@ class RTC:
                return -1
         return 0
 
-    def _encode(self,value):
+    @staticmethod
+    def _encode(value):
         '''
         Encodes integer values into binary for the RTC's registers
 
@@ -185,7 +186,7 @@ class RTC:
             self.__verify_date("second",value)
             tmp_second = self.i2c_bus.read_byte_data(self.registers['slave'],self.registers['second']) & 0b10000000
             #^^^ could be replaced by clock_status()
-            tmp_second = tmp_second | self.__encode(value)
+            tmp_second = tmp_second | RTC._encode(value)
             self.i2c_bus.write_byte_data(self.registers['slave'],self.registers['second'],tmp_second)
         except:
             print("Unable to Set second")
@@ -216,7 +217,7 @@ class RTC:
         '''
         try:
             self.__verify_date("minute",value)
-            self.i2c_bus.write_byte_data(self.registers['slave'],self.registers['minute'],self.__encode(value) )
+            self.i2c_bus.write_byte_data(self.registers['slave'],self.registers['minute'],RTC._encode(value) )
         except:
             print("Unable to set minute")
 
@@ -255,7 +256,7 @@ class RTC:
         '''
         try:
             self.__verify_date("hour",value)
-            tmp_hour =  (self.i2c_bus.read_byte_data(self.registers['slave'],self.registers['hour']) & 0b11000000) | self.__encode(value)
+            tmp_hour =  (self.i2c_bus.read_byte_data(self.registers['slave'],self.registers['hour']) & 0b11000000) | RTC._encode(value)
             self.i2c_bus.write_byte_data(self.registers['slave'],self.registers['hour'],tmp_hour)
         except:
             print("Unable to Set Hours")
@@ -285,7 +286,7 @@ class RTC:
         '''
         try:
             self.__verify_date("day",value)
-            self.i2c_bus.write_byte_data(self.registers['slave'],self.registers['day'],self.__encode(value))
+            self.i2c_bus.write_byte_data(self.registers['slave'],self.registers['day'],RTC._encode(value))
         except:
             print("Unable to Set Days")
 
@@ -338,7 +339,7 @@ class RTC:
         '''
         try:
             self.__verify_date("month",value)
-            tmp_month= self.__encode(value) | (self.i2c_bus.read_byte_data(self.registers['slave'],self.registers['month']) & 0b11100000)
+            tmp_month= RTC._encode(value) | (self.i2c_bus.read_byte_data(self.registers['slave'],self.registers['month']) & 0b11100000)
             self.i2c_bus.write_byte_data(self.registers['slave'],self.registers['month'],tmp_month)
         except:
             print("Unable to Set Month")
@@ -366,7 +367,7 @@ class RTC:
             Value: Integer value to set the year register to, must be eligible value (0-99 which maps to 2000-2099)
         '''
         try:
-            self.i2c_bus.write_byte_data(self.registers['slave'],self.registers['year'],self.__encode(value))
+            self.i2c_bus.write_byte_data(self.registers['slave'],self.registers['year'],RTC._encode(value))
         except:
             print("Unable to Get Year")
 
