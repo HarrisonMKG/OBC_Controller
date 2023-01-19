@@ -126,8 +126,8 @@ class RTC:
             1: Battery = ON
         '''
         try:
-            tmp_battery = self.i2c_bus.read_byte_data(self.registers['slave'],self.registers['wkday'])
-            return  (tmp_battery & 0b1000)>>3
+            weekday_raw = self.i2c_bus.read_byte_data(self.registers['slave'],self.registers['wkday'])
+            return  (weekday_raw & 0b1000)>>3
         except:
             raise RuntimeError("Unable to get Battery State")
 
@@ -160,9 +160,9 @@ class RTC:
             Integer representing seconds data
         '''
         try:
-            tmp_second = self.i2c_bus.read_byte_data(self.registers['slave'],self.registers['second'])
-            tmp_second = tmp_second & 0b01111111 #Remove the start oscillation bit
-            return (tmp_second>>4)*10 + (tmp_second & 0b00001111)
+            second_raw = self.i2c_bus.read_byte_data(self.registers['slave'],self.registers['second'])
+            second_raw = second_raw & 0b01111111 #Remove the start oscillation bit
+            return (second_raw>>4)*10 + (second_raw & 0b00001111)
         except:
             raise RuntimeError("Unable to Get Second")
 
@@ -175,11 +175,8 @@ class RTC:
             Value: Integer value to set the seconds register to
         '''
         try:
-            tmp_second = self.i2c_bus.read_byte_data(self.registers['slave'],self.registers['second']) & 0b10000000
-            #^^^ could be replaced by clock_status()
-            tmp_second = self.clock
-            tmp_second = tmp_second | RTC._encode(value)
-            self.i2c_bus.write_byte_data(self.registers['slave'],self.registers['second'],tmp_second)
+            second_encoded = self.clock << 7 | RTC._encode(value)
+            self.i2c_bus.write_byte_data(self.registers['slave'],self.registers['second'],second_encoded)
         except:
             raise RuntimeError("Unable to Set Second")
 
@@ -192,9 +189,9 @@ class RTC:
             Integer representing minute data
         '''
         try:
-            tmp_minute =  self.i2c_bus.read_byte_data(self.registers['slave'],self.registers['minute'])
-            tmp_minute = tmp_minute & 0b01111111 #Remove uninitialized bit
-            return (tmp_minute >>4)*10 + (tmp_minute & 0b00001111)
+            minute_raw =  self.i2c_bus.read_byte_data(self.registers['slave'],self.registers['minute'])
+            minute_raw &=  0b01111111 #Remove uninitialized bit
+            return (minute_raw >>4)*10 + (minute_raw & 0b00001111)
         except:
             raise RuntimeError("Unable to Get Minute")
 
@@ -207,7 +204,8 @@ class RTC:
             Value: Integer value to set the minutes register to, must be eligible minute value (0-60)
         '''
         try:
-            self.i2c_bus.write_byte_data(self.registers['slave'],self.registers['minute'],RTC._encode(value) )
+            minute_encoded = RTC._encode(value)
+            self.i2c_bus.write_byte_data(self.registers['slave'],self.registers['minute'], minute_encoded)
         except:
             raise RuntimeError("Unable to Set Minute")
 
@@ -245,8 +243,8 @@ class RTC:
             Value: Integer value to set the hour register to, must be an eligible hour (1-60)
         '''
         try:
-            tmp_hour =  (self.i2c_bus.read_byte_data(self.registers['slave'],self.registers['hour']) & 0b11000000) | RTC._encode(value)
-            self.i2c_bus.write_byte_data(self.registers['slave'],self.registers['hour'],tmp_hour)
+            hour_encoded =  (self.i2c_bus.read_byte_data(self.registers['slave'],self.registers['hour']) & 0b11000000) | RTC._encode(value)
+            self.i2c_bus.write_byte_data(self.registers['slave'],self.registers['hour'],hour_encoded)
         except:
             raise RuntimeError("Unable to Set Hours")
 
@@ -259,9 +257,9 @@ class RTC:
             Integer representing day data
         '''
         try:
-            tmp_days = self.i2c_bus.read_byte_data(self.registers['slave'],self.registers['day'])
-            tmp_days = tmp_days & 0b00111111 #Remove unused bits
-            return (tmp_days >>4)*10 + (tmp_days & 0b00001111)
+            day_raw = self.i2c_bus.read_byte_data(self.registers['slave'],self.registers['day'])
+            day_raw = tmp_days & 0b00111111 #Remove unused bits
+            return (day_raw>>4)*10 + (day_raw & 0b00001111)
         except:
             raise RuntimeError("Unable to Get Days")
 
@@ -274,7 +272,8 @@ class RTC:
             Value: Integer value to set the day register to, must be an eligible amount for days in month
         '''
         try:
-            self.i2c_bus.write_byte_data(self.registers['slave'],self.registers['day'],RTC._encode(value))
+            day_encoded = RTC._encode(value)
+            self.i2c_bus.write_byte_data(self.registers['slave'],self.registers['day'],day_encoded)
         except:
             raise RuntimeError("Unable to Set Days")
 
@@ -299,9 +298,9 @@ class RTC:
             Integer representing month data
         '''
         try:
-            tmp_months = self.i2c_bus.read_byte_data(self.registers['slave'],self.registers['month'])
-            tmp_months = tmp_months & 0b00011111 #Remove unused bits
-            return (tmp_months >>4)*10 + (tmp_months & 0b00001111)
+            month_raw = self.i2c_bus.read_byte_data(self.registers['slave'],self.registers['month'])
+            month_raw &= 0b00011111 #Remove unused bits
+            return (month_raw >> 4)*10 + (month_raw & 0b00001111)
         except:
             raise RuntimeError("Unable to Get Month")
 
@@ -326,8 +325,8 @@ class RTC:
             Value: Integer value to set the month register to, must be an eligible month (1-12)
         '''
         try:
-            tmp_month= RTC._encode(value) | (self.i2c_bus.read_byte_data(self.registers['slave'],self.registers['month']) & 0b11100000)
-            self.i2c_bus.write_byte_data(self.registers['slave'],self.registers['month'],tmp_month)
+            month_encoded = RTC._encode(value) | (self.i2c_bus.read_byte_data(self.registers['slave'],self.registers['month']) & 0b11100000)
+            self.i2c_bus.write_byte_data(self.registers['slave'],self.registers['month'],month_encoded)
         except:
             raise RuntimeError("Unable to Set Month")
 
@@ -340,8 +339,8 @@ class RTC:
                 Value: Integer value to set the year register to, must be eligible value (0-99 which maps to 2000-2099)
             '''
             try:
-                years_raw = self.i2c_bus.read_byte_data(self.registers['slave'],self.registers['year'])
-                return (tmp_years_rew >>4)*10 + (years_raw & 0b00001111) + 2000
+                year_raw = self.i2c_bus.read_byte_data(self.registers['slave'],self.registers['year'])
+                return (year_raw >> 4)*10 + (year_raw & 0b00001111) + 2000
             except:
                 raise RuntimeError("Unable to Get Year")
 
