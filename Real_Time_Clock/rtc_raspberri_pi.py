@@ -25,7 +25,7 @@ class RTC:
         'year' : 0x06,
     }
 
-    def __check_tick(self,clock_state):
+    def _check_tick(self,clock_state):
         '''
         Args: clock_state: can either be 0, meaning off, or 1 meaning on
         Return: -2 if unable to check tick, -1 if clock is in an undesirable state, 0 if clock is in desired state
@@ -79,7 +79,7 @@ class RTC:
                return -1
         return 0
 
-    def __encode(self,value):
+    def _encode(self,value):
         '''
         Encodes integer values into binary for the RTC's registers
 
@@ -402,7 +402,7 @@ class RTC:
         except:
             print("Unable to Set Current Time")
 
-    def __verify_date(self, time_unit, value):
+    def _verify_date(self, time_unit, value):
         '''
         Verify that the value inputted is acceptable for that unit of time
         Second: 0-60
