@@ -29,28 +29,21 @@ class RTC:
     def _check_tick(self,clock_state):
         '''
         Args: clock_state: can either be 0, meaning off, or 1 meaning on
-        Return: -2 if unable to check tick, -1 if clock is in an undesirable state, 0 if clock is in desired state
+        Return:  -1 if clock is in an undesirable state, 0 if clock is in desired state
         '''
-        try:
-            tmp_second = self._second
-            time.sleep(5)
-            time_diff = self._second - tmp_second
-            if clock_state == 1:
-                if time_diff > 0:
-                    print("Success: Clock is Ticking")
-                    return 0
-                else:
-                    print("Fail: Clock is not ticking")
-                    return -1
-            elif clock_state == 0:
-                if time_diff == 0:
-                    print("Success: Clock is not Ticking")
-                    return 0
-                else:
-                    print("Fail: Clock is still ticking")
-                    return -1
-        except:
-            raise Exception("Unable to Check clock tick")
+        tmp_second = self._second
+        time.sleep(3)
+        time_diff = self._second - tmp_second
+        if clock_state == 1:
+            if time_diff > 0:
+                return 0
+            else:
+                return -1
+        elif clock_state == 0:
+            if time_diff == 0:
+                return 0
+            else:
+                return -1
 
     @staticmethod
     def _encode(value):
@@ -74,23 +67,19 @@ class RTC:
         '''
         self.battery = battery_state
         self.clock = clock_state
-        self.datetime = datetime.datetime()
 
     def reset(self):
         '''
-        Reset the clock's time to zero, and battery to zero
+        Reset the clock's time to 0:0:0 January 1 2000, battery to zero, and stop clock
 
         Returns:
             -1: The RTC was unable to be reset
             0: The RTC was able to be reset
         '''
         for self.rtc_register in self.registers:
-            try:
-                self.datetime = "0-1-0-0-0-0-0" 
-                self.battery = 0 
-            except:
-               print("Unable to reset RTC")
-               return -1
+            self.datetime = "0-1-1-0-0-0" 
+            self.battery = 0 
+            self.clock = 0 
         return 0
 
     @property
@@ -102,11 +91,8 @@ class RTC:
             0: Clock = OFF
             1: Clock = ON
         '''
-        try:# if check_device_status is bad
-            second_data = self.i2c_bus.read_byte_data(self.registers['slave'],self.registers['second'])
-        except:
-            raise Exception("Could not get clock state")
-        return second_data >> 7 #Should return a 1 or a 0 (on or off)
+        second_raw = self.i2c_bus.read_byte_data(self.registers['slave'],self.registers['second'])
+        return second_raw >> 7 #Should return a 1 or a 0 (on or off)
 
     @clock.setter
     def clock(self,state):
@@ -116,15 +102,19 @@ class RTC:
         Args:
             State: 0 = Clock is OFF, 1 = Clock is ON
         '''
-        second_data = self.i2c_bus.read_byte_data(self.registers['slave'],self.registers['second'])
+        second_raw = self.i2c_bus.read_byte_data(self.registers['slave'],self.registers['second'])
         if state == 1:
-            second_data = 0b10000000 | second_data
+            clock_state = 0b10000000 | second_raw
         elif state == 0:
-            second_data = 0b01111111 & second_data
+            clock_state = 0b01111111 & second_raw
         else:
-            raise Exception(f"Unable to set Clock. State entered must be 0 or 1, not {state}")
-        self.i2c_bus.write_byte_data(self.registers['slave'],self.registers['second'],second_data)
-        self.__check_tick(state)
+            raise ValueError(f"Unable to set Clock. Invalid state:{state}")
+        self.i2c_bus.write_byte_data(self.registers['slave'],self.registers['second'],clock_state)
+        if (self._check_tick(state) == -1):
+            if state == 0: 
+                raise RuntimeError("Clock unable to stop")
+            if state == 1: 
+                raise RuntimeError("Clock unable to start")
 
     @property
     def battery(self):
@@ -139,7 +129,7 @@ class RTC:
             tmp_battery = self.i2c_bus.read_byte_data(self.registers['slave'],self.registers['wkday'])
             return  (tmp_battery & 0b1000)>>3
         except:
-            raise Exception("Unable to get Battery State")
+            raise RuntimeError("Unable to get Battery State")
 
     @battery.setter
     def battery(self,state):
@@ -149,17 +139,17 @@ class RTC:
         Args:
             state: 0 = Battery is OFF, 1 = Battery is ON
         '''
+        if not (state == 0 or state == 1):
+            raise RuntimeError(f"Invalid state: {state}")
         try:
-            if not (state == 0 or state == 1):
-                raise Exception("Not valid value for battery, must be 0 (OFF) or 1 (ON)")
-            tmp_battery = self.i2c_bus.read_byte_data(self.registers['slave'],self.registers['wkday'])
+            weekday_raw = self.i2c_bus.read_byte_data(self.registers['slave'],self.registers['wkday'])
             if state == 0:
-                tmp_battery = tmp_battery & 0b11110111
+                battery_state = weekday_raw& 0b11110111
             else:
-                tmp_battery = tmp_battery | 0b1000
-            self.i2c_bus.write_byte_data(self.registers['slave'],self.registers['wkday'],tmp_battery)
+                battery_state = weekday_raw | 0b1000
+            self.i2c_bus.write_byte_data(self.registers['slave'],self.registers['wkday'],battery_state)
         except:
-            raise Exception("Unable to Set Battery")
+            raise RuntimeError("Unable to Set Battery")
 
     @property
     def _second(self):
@@ -174,7 +164,7 @@ class RTC:
             tmp_second = tmp_second & 0b01111111 #Remove the start oscillation bit
             return (tmp_second>>4)*10 + (tmp_second & 0b00001111)
         except:
-            print("Unable to Get Second")
+            raise RuntimeError("Unable to Get Second")
 
     @second.setter
     def _second(self,value):
@@ -191,7 +181,7 @@ class RTC:
             tmp_second = tmp_second | RTC._encode(value)
             self.i2c_bus.write_byte_data(self.registers['slave'],self.registers['second'],tmp_second)
         except:
-            print("Unable to Set second")
+            raise RuntimeError("Unable to Set Second")
 
     @property
     def _minute(self):
@@ -206,7 +196,7 @@ class RTC:
             tmp_minute = tmp_minute & 0b01111111 #Remove uninitialized bit
             return (tmp_minute >>4)*10 + (tmp_minute & 0b00001111)
         except:
-            print("Unable to Get minute")
+            raise RuntimeError("Unable to Get Minute")
 
     @minute.setter
     def _minute(self,value):
@@ -214,12 +204,12 @@ class RTC:
         Set minutes value from RTC register
 
         Args:
-            Value: Integer value to set the minutes register to, must be eligible minute value (1-60)
+            Value: Integer value to set the minutes register to, must be eligible minute value (0-60)
         '''
         try:
             self.i2c_bus.write_byte_data(self.registers['slave'],self.registers['minute'],RTC._encode(value) )
         except:
-            print("Unable to set minute")
+            raise RuntimeError("Unable to Set Minute")
 
     @property
     def _hour(self): # AM/PM untested stick to 24hr time
@@ -244,7 +234,7 @@ class RTC:
                 tmp_hour = str(tmp_hour) + am_pm
             return(tmp_hour)
         except:
-            print("Unable to get current hour")
+            raise RuntimeError("Unable to Get Hour")
 
     @hour.setter
     def _hour(self,value):
@@ -258,7 +248,7 @@ class RTC:
             tmp_hour =  (self.i2c_bus.read_byte_data(self.registers['slave'],self.registers['hour']) & 0b11000000) | RTC._encode(value)
             self.i2c_bus.write_byte_data(self.registers['slave'],self.registers['hour'],tmp_hour)
         except:
-            print("Unable to Set Hours")
+            raise RuntimeError("Unable to Set Hours")
 
     @property
     def _day(self):
@@ -273,7 +263,7 @@ class RTC:
             tmp_days = tmp_days & 0b00111111 #Remove unused bits
             return (tmp_days >>4)*10 + (tmp_days & 0b00001111)
         except:
-            print("Unable to Get Days")
+            raise RuntimeError("Unable to Get Days")
 
     @day.setter
     def _day(self,value):
@@ -286,7 +276,7 @@ class RTC:
         try:
             self.i2c_bus.write_byte_data(self.registers['slave'],self.registers['day'],RTC._encode(value))
         except:
-            print("Unable to Set Days")
+            raise RuntimeError("Unable to Set Days")
 
     @property
     def _month(self):
@@ -313,7 +303,7 @@ class RTC:
             tmp_months = tmp_months & 0b00011111 #Remove unused bits
             return (tmp_months >>4)*10 + (tmp_months & 0b00001111)
         except:
-            print("Unable to Get Days")
+            raise RuntimeError("Unable to Get Month")
 
     @month.setter
     def _month(self,value):
@@ -339,7 +329,7 @@ class RTC:
             tmp_month= RTC._encode(value) | (self.i2c_bus.read_byte_data(self.registers['slave'],self.registers['month']) & 0b11100000)
             self.i2c_bus.write_byte_data(self.registers['slave'],self.registers['month'],tmp_month)
         except:
-            print("Unable to Set Month")
+            raise RuntimeError("Unable to Set Month")
 
         @property
         def _year(self):
@@ -350,10 +340,10 @@ class RTC:
                 Value: Integer value to set the year register to, must be eligible value (0-99 which maps to 2000-2099)
             '''
             try:
-                tmp_years = self.i2c_bus.read_byte_data(self.registers['slave'],self.registers['year'])
-                return (tmp_years >>4)*10 + (tmp_years & 0b00001111) + 2000
+                years_raw = self.i2c_bus.read_byte_data(self.registers['slave'],self.registers['year'])
+                return (tmp_years_rew >>4)*10 + (years_raw & 0b00001111) + 2000
             except:
-                print("Unable to Get Year")
+                raise RuntimeError("Unable to Get Year")
 
         @year.setter
         def _year(self,value):
@@ -367,7 +357,7 @@ class RTC:
                 value -= 2000
                 self.i2c_bus.write_byte_data(self.registers['slave'],self.registers['year'],RTC._encode(value))
             except:
-                print("Unable to Get Year")
+                raise RuntimeError("Unable to Get Year")
 
         @property
         def datetime(self):
@@ -386,11 +376,11 @@ class RTC:
             try:
                 datetime_split = value.split('-')
                 datetime.datetime(datetime_split[0],datetime_split[1],datetime_split[2],datetime_split[3],datetime_split[4],datetime_split[5],0)
-                self._second = datetime_split[5]
-                self._minute = datetime_split[4]
-                self._hour = datetime_split[3]
-                self._day = datetime_split[2]
-                self._month = datetime_split[1]
-                self._year = datetime_split[0]
             except:
                 raise RuntimeError(f"Unvalid datetime: {datetime_raw}")
+            self._second = datetime_split[5]
+            self._minute = datetime_split[4]
+            self._hour = datetime_split[3]
+            self._day = datetime_split[2]
+            self._month = datetime_split[1]
+            self._year = datetime_split[0]
