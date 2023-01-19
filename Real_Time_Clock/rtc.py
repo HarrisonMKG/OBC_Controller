@@ -26,14 +26,33 @@ class RTC:
         'year' : 0x06,
     }
 
+    @staticmethod
+    def _encode(value):
+        """Encodes integer values into binary for the RTC's registers
+
+
+        Args:
+            value (int): value to be encoded 
+
+        Returns:
+            int: Encoded value to be used by RTC regiesters
+        """
+        ones = value % 10
+        tens = int(value / 10)
+        return (tens<<4 | ones)
+
     def _check_tick(self,clock_state):
-        '''
-        Args: clock_state: can either be 0, meaning off, or 1 meaning on
-        Return:  -1 if clock is in an undesirable state, 0 if clock is in desired state
-        '''
-        tmp_second = self._second
+        """_summary_
+
+        Args:
+            clock_state (bool): State of clock (0=OFF,1=ON) 
+
+        Returns:
+            int : -1 if clock is in an undesirable state, 0 if clock is in desired state
+        """
+        second_start = self._second
         time.sleep(3)
-        time_diff = self._second - tmp_second
+        time_diff = self._second - second_start
         if clock_state == 1:
             if time_diff > 0:
                 return 0
@@ -44,18 +63,6 @@ class RTC:
                 return 0
             else:
                 return -1
-
-    @staticmethod
-    def _encode(value):
-        '''
-        Encodes integer values into binary for the RTC's registers
-
-        Returns:
-            Bit encoding for RTC registers
-        '''
-        ones = value % 10
-        tens = int(value / 10)
-        return (tens<<4 | ones)
 
     def __init__(self, battery_state, clock_state):
         '''
@@ -218,19 +225,9 @@ class RTC:
             Integer representing hour data
         '''
         try:
-            tmp_hour =  self.i2c_bus.read_byte_data(self.registers['slave'],self.registers['hour'])
-            hour_format = tmp_hour >> 6 & 0x1
-            if hour_format == 0:
-                tmp_hour = ((tmp_hour>>4) & 0x03)*10 + (tmp_hour & 0x0F)
-            else:
-                tmp_hour = ((tmp_hour>>4) & 0x01)*10 + (tmp_hour & 0x0F)
-                am_pm = (tmp_hour>>4) & 0x02
-                if am_pm == 1:
-                    am_pm = 'PM'
-                else:
-                    am_pm = 'AM'
-                tmp_hour = str(tmp_hour) + am_pm
-            return(tmp_hour)
+            hour_raw =  self.i2c_bus.read_byte_data(self.registers['slave'],self.registers['hour'])
+            hour = ((hour_raw>>4) & 0x03)*10 + (hour_raw & 0x0F)
+            return(hour)
         except:
             raise RuntimeError("Unable to Get Hour")
 
@@ -258,7 +255,7 @@ class RTC:
         '''
         try:
             day_raw = self.i2c_bus.read_byte_data(self.registers['slave'],self.registers['day'])
-            day_raw = tmp_days & 0b00111111 #Remove unused bits
+            day_raw &= 0b00111111 #Remove unused bits
             return (day_raw>>4)*10 + (day_raw & 0b00001111)
         except:
             raise RuntimeError("Unable to Get Days")
