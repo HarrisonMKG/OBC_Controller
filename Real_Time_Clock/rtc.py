@@ -172,12 +172,6 @@ class RTC:
         except:
             raise RuntimeError("Unable to Get Second")
 
-        '''
-        Set seconds value from RTC register
-
-        Args:
-            Value: Integer value to set the seconds register to
-        '''
     @second.setter
     def _second(self,value):
         """Set value of second RTC register
@@ -352,7 +346,7 @@ class RTC:
 
         @property
         def _year(self):
-            """Get value from year RTC regiester
+            """Get value from year RTC register
 
             Raises:
                 RuntimeError:  "Unable to Get Year"
@@ -399,13 +393,13 @@ class RTC:
                 datetime_raw (string): datetime in format "%Y-%m-%d %H:%M:%S" 
 
             Raises:
-                RuntimeError: f"Unvalid datetime: {datetime_raw}"
+                RuntimeError: f"Invalid datetime: {datetime_raw}"
             """
             try:
                 datetime_split = value.split('-')
                 datetime.datetime(datetime_split[0],datetime_split[1],datetime_split[2],datetime_split[3],datetime_split[4],datetime_split[5],0)
             except:
-                raise RuntimeError(f"Unvalid datetime: {datetime_raw}")
+                raise RuntimeError(f"Invalid datetime: {datetime_raw}")
             self._second = datetime_split[5]
             self._minute = datetime_split[4]
             self._hour = datetime_split[3]
