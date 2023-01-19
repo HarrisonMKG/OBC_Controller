@@ -9,10 +9,10 @@ class RTC:
     Data Sheet: http://ww1.microchip.com/downloads/en/devicedoc/20002266h.pdf
 
     Functionality:
-    -Enable/Disable Internal Oscillator (Start and Stop Clock)
-    -Get Date and Time from Clock
-    -Enable/Disable Backup Battery
-    -Reset Clock
+        -Enable/Disable Internal Oscillator (Start and Stop Clock)
+        -Get Date and Time from Clock
+        -Enable/Disable Backup Battery
+        -Reset Clock
     '''
     i2c_bus = SMBus(1)
     registers = {
@@ -30,7 +30,6 @@ class RTC:
     def _encode(value):
         """Encodes integer values into binary for the RTC's registers
 
-
         Args:
             value (int): value to be encoded 
 
@@ -42,7 +41,7 @@ class RTC:
         return (tens<<4 | ones)
 
     def _check_tick(self,clock_state):
-        """_summary_
+        """Verifiy that the clock is acting im acordance to it's desired state
 
         Args:
             clock_state (bool): State of clock (0=OFF,1=ON) 
@@ -65,50 +64,44 @@ class RTC:
                 return -1
 
     def __init__(self, battery_state, clock_state):
-        '''
-        Initialization of RTC class
+        """Initialization of RTC class
 
         Args:
-            battery_state: 0 = backup battery off, 1 = backup battery on
-            clock_state: 0 = clock off, 1 = clock on
-        '''
+            battery_state (boolean): 0 = backup battery off, 1 = backup battery on
+            clock_state (bolean): clock off, 1 = clock on 
+        """
         self.battery = battery_state
         self.clock = clock_state
 
-    def reset(self):
-        '''
-        Reset the clock's time to 0:0:0 January 1 2000, battery to zero, and stop clock
 
-        Returns:
-            -1: The RTC was unable to be reset
-            0: The RTC was able to be reset
-        '''
-        for self.rtc_register in self.registers:
-            self.datetime = "0-1-1-0-0-0" 
-            self.battery = 0 
-            self.clock = 0 
-        return 0
+    def reset(self):
+        """Reset the clock's time to 0:0:0 January 1 2000, battery to zero, and stop clock"""
+        self.datetime = "0-1-1-0-0-0" 
+        self.battery = 0 
+        self.clock = 0 
 
     @property
     def clock(self):
-        '''
-        Get state of the internal oscillator of the RTC. This will control if the clock is ticking or not
+        """Get state of the internal oscillator of the RTC. This will control if the clock is ticking or not
 
-        Return:
-            0: Clock = OFF
-            1: Clock = ON
-        '''
+        Returns:
+            bolean :State of clock 0 = OFF , 1 = ON
+        """
         second_raw = self.i2c_bus.read_byte_data(self.registers['slave'],self.registers['second'])
         return second_raw >> 7 #Should return a 1 or a 0 (on or off)
 
     @clock.setter
     def clock(self,state):
-        '''
-        Set state of the internal oscillator of the RTC. This will control if the clock is ticking or not
+        """Set state of the internal oscillator of the RTC. This will control if the clock is ticking or not
 
         Args:
-            State: 0 = Clock is OFF, 1 = Clock is ON
-        '''
+            state (boolean): 0 = Turn clock off, 1 = Turn clock on 
+
+        Raises:
+            ValueError: f"Unable to set Clock. Invalid state:{state}"
+            RuntimeError: "Clock unable to stop"
+            RuntimeError: "Clock unable to start"
+        """
         second_raw = self.i2c_bus.read_byte_data(self.registers['slave'],self.registers['second'])
         if state == 1:
             clock_state = 0b10000000 | second_raw
@@ -125,13 +118,14 @@ class RTC:
 
     @property
     def battery(self):
-        '''
-        Get state of the backup battery of the RTC. This will control if the backup battery or not
+        """Get state of the backup battery of the RTC. This will control if the backup battery or not
 
-        Return:
-            0: Battery = OFF
-            1: Battery = ON
-        '''
+        Raises:
+            RuntimeError: "Unable to get Battery State"
+
+        Returns:
+            int : State of backup battery, 0=OFF, 1=ON 
+        """
         try:
             weekday_raw = self.i2c_bus.read_byte_data(self.registers['slave'],self.registers['wkday'])
             return  (weekday_raw & 0b1000)>>3
@@ -140,12 +134,15 @@ class RTC:
 
     @battery.setter
     def battery(self,state):
-        '''
-        Set state of the backup battery of the RTC. This will control if the backup battery or not
+        """Set state of the backup battery of the RTC. This will control if the backup battery or not
 
         Args:
-            state: 0 = Battery is OFF, 1 = Battery is ON
-        '''
+            state (_type_): 0 = Turn off backup battery, 1 = Turn on backup battery 
+
+        Raises:
+            RuntimeError: _description_
+            RuntimeError: _description_
+        """
         if not (state == 0 or state == 1):
             raise RuntimeError(f"Invalid state: {state}")
         try:
@@ -160,12 +157,14 @@ class RTC:
 
     @property
     def _second(self):
-        '''
-        Get seconds value from RTC register
+        """Get seconds value from RTC register
 
-        Return:
-            Integer representing seconds data
-        '''
+        Raises:
+            RuntimeError: Unable to Get Second
+
+        Returns:
+            int : "Unable to Get Second"
+        """
         try:
             second_raw = self.i2c_bus.read_byte_data(self.registers['slave'],self.registers['second'])
             second_raw = second_raw & 0b01111111 #Remove the start oscillation bit
@@ -173,14 +172,22 @@ class RTC:
         except:
             raise RuntimeError("Unable to Get Second")
 
-    @second.setter
-    def _second(self,value):
         '''
         Set seconds value from RTC register
 
         Args:
             Value: Integer value to set the seconds register to
         '''
+    @second.setter
+    def _second(self,value):
+        """Set value of second RTC register
+
+        Args:
+            value (int): set to valid second (0-60) 
+
+        Raises:
+            RuntimeError: _description_
+        """
         try:
             second_encoded = self.clock << 7 | RTC._encode(value)
             self.i2c_bus.write_byte_data(self.registers['slave'],self.registers['second'],second_encoded)
@@ -189,12 +196,14 @@ class RTC:
 
     @property
     def _minute(self):
-        '''
-        Get minute value from RTC register
+        """Get value from minute RTC register
 
-        Return:
-            Integer representing minute data
-        '''
+        Raises:
+            RuntimeError: "Unable to Get Minute"
+
+        Returns:
+            int : decoded minute value 
+        """
         try:
             minute_raw =  self.i2c_bus.read_byte_data(self.registers['slave'],self.registers['minute'])
             minute_raw &=  0b01111111 #Remove uninitialized bit
@@ -204,12 +213,14 @@ class RTC:
 
     @minute.setter
     def _minute(self,value):
-        '''
-        Set minutes value from RTC register
+        """Set minute RTC register
 
         Args:
-            Value: Integer value to set the minutes register to, must be eligible minute value (0-60)
-        '''
+            value (int): set a valid minute (0-60)
+
+        Raises:
+            RuntimeError: "Unable to Set Minute"
+        """
         try:
             minute_encoded = RTC._encode(value)
             self.i2c_bus.write_byte_data(self.registers['slave'],self.registers['minute'], minute_encoded)
@@ -217,13 +228,15 @@ class RTC:
             raise RuntimeError("Unable to Set Minute")
 
     @property
-    def _hour(self): # AM/PM untested stick to 24hr time
-        '''
-        Get hour value from RTC register
+    def _hour(self): 
+        """Get value from hour RTC register
 
-        Return:
-            Integer representing hour data
-        '''
+        Raises:
+            RuntimeError: "Unable to Get Hour"
+
+        Returns:
+            int : decoded hour value
+        """
         try:
             hour_raw =  self.i2c_bus.read_byte_data(self.registers['slave'],self.registers['hour'])
             hour = ((hour_raw>>4) & 0x03)*10 + (hour_raw & 0x0F)
@@ -233,26 +246,30 @@ class RTC:
 
     @hour.setter
     def _hour(self,value):
-        '''
-        Set hour value from RTC register
+        """Set hour value from RTC register
 
         Args:
-            Value: Integer value to set the hour register to, must be an eligible hour (1-60)
-        '''
+            value (int): set a valid hour value (0-24)
+
+        Raises:
+            RuntimeError: "Unable to Set Hours"
+        """
         try:
-            hour_encoded =  (self.i2c_bus.read_byte_data(self.registers['slave'],self.registers['hour']) & 0b11000000) | RTC._encode(value)
+            hour_encoded =  (self.i2c_bus.read_byte_data(self.registers['slave'],self.registers['hour']) & 0b1 << 7 ) | RTC._encode(value)
             self.i2c_bus.write_byte_data(self.registers['slave'],self.registers['hour'],hour_encoded)
         except:
             raise RuntimeError("Unable to Set Hours")
 
     @property
     def _day(self):
-        '''
-        Get day value from RTC register
+        """Get value from day RTC register
 
-        Return:
-            Integer representing day data
-        '''
+        Raises:
+            RuntimeError: "Unable to Get Days" 
+
+        Returns:
+            int : decoded day value
+        """
         try:
             day_raw = self.i2c_bus.read_byte_data(self.registers['slave'],self.registers['day'])
             day_raw &= 0b00111111 #Remove unused bits
@@ -262,12 +279,14 @@ class RTC:
 
     @day.setter
     def _day(self,value):
-        '''
-        Set day value from RTC register
+        """Set value in day RTC register 
 
         Args:
-            Value: Integer value to set the day register to, must be an eligible amount for days in month
-        '''
+            value (int): set the month register to an eligible day 
+
+        Raises:
+            RuntimeError: "Unable to Set Days"
+        """
         try:
             day_encoded = RTC._encode(value)
             self.i2c_bus.write_byte_data(self.registers['slave'],self.registers['day'],day_encoded)
@@ -276,8 +295,7 @@ class RTC:
 
     @property
     def _month(self):
-        '''
-        Get month value from RTC register
+        """Get month value from RTC register
         1 -> January
         2 -> February
         3 -> March
@@ -291,9 +309,12 @@ class RTC:
         11 -> November
         12 -> December
 
-        Return:
-            Integer representing month data
-        '''
+        Raises:
+            RuntimeError: "Unable to Get Month"
+
+        Returns:
+            int : Decoded month value
+        """
         try:
             month_raw = self.i2c_bus.read_byte_data(self.registers['slave'],self.registers['month'])
             month_raw &= 0b00011111 #Remove unused bits
@@ -303,8 +324,7 @@ class RTC:
 
     @month.setter
     def _month(self,value):
-        '''
-        Set month value from RTC register
+        """Set value of month RTC register
         1 -> January
         2 -> February
         3 -> March
@@ -319,8 +339,11 @@ class RTC:
         12 -> December
 
         Args:
-            Value: Integer value to set the month register to, must be an eligible month (1-12)
-        '''
+            value (int): set the month register to an eligible month (1-12)
+
+        Raises:
+            RuntimeError: "Unable to Set Month"
+        """
         try:
             month_encoded = RTC._encode(value) | (self.i2c_bus.read_byte_data(self.registers['slave'],self.registers['month']) & 0b11100000)
             self.i2c_bus.write_byte_data(self.registers['slave'],self.registers['month'],month_encoded)
@@ -329,12 +352,14 @@ class RTC:
 
         @property
         def _year(self):
-            '''
-            Get year value from RTC register
+            """Get value from year RTC regiester
 
-            Args:
-                Value: Integer value to set the year register to, must be eligible value (0-99 which maps to 2000-2099)
-            '''
+            Raises:
+                RuntimeError:  "Unable to Get Year"
+
+            Returns:
+                _type_: The decoded year value 
+            """
             try:
                 year_raw = self.i2c_bus.read_byte_data(self.registers['slave'],self.registers['year'])
                 return (year_raw >> 4)*10 + (year_raw & 0b00001111) + 2000
@@ -343,12 +368,14 @@ class RTC:
 
         @year.setter
         def _year(self,value):
-            '''
-            Set year value from RTC register
+            """Set year RTC register
 
             Args:
-                Value: Integer value to set the year register to, must be eligible value (0-99 which maps to 2000-2099)
-            '''
+                value (_type_): Integer value to set the year register to, must be eligible value (0-99 which maps to 2000-2099) 
+
+            Raises:
+                RuntimeError: "Unable to Get Year"
+            """
             try:
                 value -= 2000
                 self.i2c_bus.write_byte_data(self.registers['slave'],self.registers['year'],RTC._encode(value))
@@ -357,6 +384,11 @@ class RTC:
 
         @property
         def datetime(self):
+            """Get Current datetime from RTC
+
+            Returns:
+                string: datetime in format year-month-day-hour-minute-second
+            """
             return f"{self._year}-{self._month}-{self._day}-{self._hour}-{self._minute}-{self._second}" 
 
         @datetime.setter
@@ -367,7 +399,7 @@ class RTC:
                 datetime_raw (string): datetime in format "%Y-%m-%d %H:%M:%S" 
 
             Raises:
-                RuntimeError: _description_
+                RuntimeError: f"Unvalid datetime: {datetime_raw}"
             """
             try:
                 datetime_split = value.split('-')
