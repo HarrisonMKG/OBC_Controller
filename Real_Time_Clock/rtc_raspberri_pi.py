@@ -1,6 +1,7 @@
 #Maintainer Harrison Gordon
 import time
 from   smbus import SMBus
+import datetime
 
 class RTC:
     '''
@@ -19,7 +20,7 @@ class RTC:
         'second': 0x00,
         'minute': 0x01,
         'hour' : 0x02,
-        'wkday' : 0x3,
+        'wkday' : 0x3, #Regeister only utilized by battery
         'day' : 0x04,
         'month': 0x05,
         'year' : 0x06,
@@ -31,9 +32,9 @@ class RTC:
         Return: -2 if unable to check tick, -1 if clock is in an undesirable state, 0 if clock is in desired state
         '''
         try:
-            tmp_second = self.second
+            tmp_second = self._second
             time.sleep(5)
-            time_diff = self.second - tmp_second
+            time_diff = self._second - tmp_second
             if clock_state == 1:
                 if time_diff > 0:
                     print("Success: Clock is Ticking")
@@ -51,34 +52,6 @@ class RTC:
         except:
             raise Exception("Unable to Check clock tick")
 
-    def __init__(self, battery_state, clock_state):
-        '''
-        Initialization of RTC class
-
-        Args:
-            battery_state: 0 = backup battery off, 1 = backup battery on
-            clock_state: 0 = clock off, 1 = clock on
-        '''
-        self.battery = battery_state
-        self.clock = clock_state
-
-    def reset(self):
-        '''
-        Reset the clock's time to zero, and battery to zero
-
-        Returns:
-            -1: The RTC was unable to be reset
-            0: The RTC was able to be reset
-        '''
-        for self.rtc_register in self.registers:
-            try:
-                self.current_time = 0
-                self.battery = 0
-            except:
-               print("Unable to reset RTC")
-               return -1
-        return 0
-
     @staticmethod
     def _encode(value):
         '''
@@ -90,6 +63,35 @@ class RTC:
         ones = value % 10
         tens = int(value / 10)
         return (tens<<4 | ones)
+
+    def __init__(self, battery_state, clock_state):
+        '''
+        Initialization of RTC class
+
+        Args:
+            battery_state: 0 = backup battery off, 1 = backup battery on
+            clock_state: 0 = clock off, 1 = clock on
+        '''
+        self.battery = battery_state
+        self.clock = clock_state
+        self.datetime = datetime.datetime()
+
+    def reset(self):
+        '''
+        Reset the clock's time to zero, and battery to zero
+
+        Returns:
+            -1: The RTC was unable to be reset
+            0: The RTC was able to be reset
+        '''
+        for self.rtc_register in self.registers:
+            try:
+                self.datetime = "0-1-0-0-0-0-0" 
+                self.battery = 0 
+            except:
+               print("Unable to reset RTC")
+               return -1
+        return 0
 
     @property
     def clock(self):
@@ -160,7 +162,7 @@ class RTC:
             raise Exception("Unable to Set Battery")
 
     @property
-    def second(self):
+    def _second(self):
         '''
         Get seconds value from RTC register
 
@@ -175,7 +177,7 @@ class RTC:
             print("Unable to Get Second")
 
     @second.setter
-    def second(self,value):
+    def _second(self,value):
         '''
         Set seconds value from RTC register
 
@@ -183,17 +185,16 @@ class RTC:
             Value: Integer value to set the seconds register to
         '''
         try:
-            self.__verify_date("second",value)
             tmp_second = self.i2c_bus.read_byte_data(self.registers['slave'],self.registers['second']) & 0b10000000
             #^^^ could be replaced by clock_status()
+            tmp_second = self.clock
             tmp_second = tmp_second | RTC._encode(value)
             self.i2c_bus.write_byte_data(self.registers['slave'],self.registers['second'],tmp_second)
         except:
             print("Unable to Set second")
 
     @property
-    def minute(self):
-
+    def _minute(self):
         '''
         Get minute value from RTC register
 
@@ -208,7 +209,7 @@ class RTC:
             print("Unable to Get minute")
 
     @minute.setter
-    def minute(self,value):
+    def _minute(self,value):
         '''
         Set minutes value from RTC register
 
@@ -216,13 +217,12 @@ class RTC:
             Value: Integer value to set the minutes register to, must be eligible minute value (1-60)
         '''
         try:
-            self.__verify_date("minute",value)
             self.i2c_bus.write_byte_data(self.registers['slave'],self.registers['minute'],RTC._encode(value) )
         except:
             print("Unable to set minute")
 
     @property
-    def hour(self): # AM/PM untested stick to 24hr time
+    def _hour(self): # AM/PM untested stick to 24hr time
         '''
         Get hour value from RTC register
 
@@ -247,7 +247,7 @@ class RTC:
             print("Unable to get current hour")
 
     @hour.setter
-    def hour(self,value):
+    def _hour(self,value):
         '''
         Set hour value from RTC register
 
@@ -255,14 +255,13 @@ class RTC:
             Value: Integer value to set the hour register to, must be an eligible hour (1-60)
         '''
         try:
-            self.__verify_date("hour",value)
             tmp_hour =  (self.i2c_bus.read_byte_data(self.registers['slave'],self.registers['hour']) & 0b11000000) | RTC._encode(value)
             self.i2c_bus.write_byte_data(self.registers['slave'],self.registers['hour'],tmp_hour)
         except:
             print("Unable to Set Hours")
 
     @property
-    def day(self):
+    def _day(self):
         '''
         Get day value from RTC register
 
@@ -277,7 +276,7 @@ class RTC:
             print("Unable to Get Days")
 
     @day.setter
-    def day(self,value):
+    def _day(self,value):
         '''
         Set day value from RTC register
 
@@ -285,13 +284,12 @@ class RTC:
             Value: Integer value to set the day register to, must be an eligible amount for days in month
         '''
         try:
-            self.__verify_date("day",value)
             self.i2c_bus.write_byte_data(self.registers['slave'],self.registers['day'],RTC._encode(value))
         except:
             print("Unable to Set Days")
 
     @property
-    def month(self):
+    def _month(self):
         '''
         Get month value from RTC register
         1 -> January
@@ -318,7 +316,7 @@ class RTC:
             print("Unable to Get Days")
 
     @month.setter
-    def month(self,value):
+    def _month(self,value):
         '''
         Set month value from RTC register
         1 -> January
@@ -338,104 +336,61 @@ class RTC:
             Value: Integer value to set the month register to, must be an eligible month (1-12)
         '''
         try:
-            self._verify_date("month",value)
             tmp_month= RTC._encode(value) | (self.i2c_bus.read_byte_data(self.registers['slave'],self.registers['month']) & 0b11100000)
             self.i2c_bus.write_byte_data(self.registers['slave'],self.registers['month'],tmp_month)
         except:
             print("Unable to Set Month")
 
-    @property
-    def year(self):
-        '''
-        Get year value from RTC register
+        @property
+        def _year(self):
+            '''
+            Get year value from RTC register
 
-        Args:
-            Value: Integer value to set the year register to, must be eligible value (0-99 which maps to 2000-2099)
-        '''
-        try:
-            tmp_years = self.i2c_bus.read_byte_data(self.registers['slave'],self.registers['year'])
-            return (tmp_years >>4)*10 + (tmp_years & 0b00001111) + 2000
-        except:
-            print("Unable to Get Year")
+            Args:
+                Value: Integer value to set the year register to, must be eligible value (0-99 which maps to 2000-2099)
+            '''
+            try:
+                tmp_years = self.i2c_bus.read_byte_data(self.registers['slave'],self.registers['year'])
+                return (tmp_years >>4)*10 + (tmp_years & 0b00001111) + 2000
+            except:
+                print("Unable to Get Year")
 
-    @year.setter
-    def year(self,value):
-        '''
-        Set year value from RTC register
+        @year.setter
+        def _year(self,value):
+            '''
+            Set year value from RTC register
 
-        Args:
-            Value: Integer value to set the year register to, must be eligible value (0-99 which maps to 2000-2099)
-        '''
-        try:
-            self.i2c_bus.write_byte_data(self.registers['slave'],self.registers['year'],RTC._encode(value))
-        except:
-            print("Unable to Get Year")
+            Args:
+                Value: Integer value to set the year register to, must be eligible value (0-99 which maps to 2000-2099)
+            '''
+            try:
+                value -= 2000
+                self.i2c_bus.write_byte_data(self.registers['slave'],self.registers['year'],RTC._encode(value))
+            except:
+                print("Unable to Get Year")
 
-    @property
-    def current_time(self): #returns array in format [Second,Minute,Hour,Day,Month,Year]
-        '''
-        Get second,minute,hour,day,month and year values from RTC register
+        @property
+        def datetime(self):
+            return f"{self._year}-{self._month}-{self._day}-{self._hour}-{self._minute}-{self._second}" 
 
-        Returns:
-            Array of 6 integers in the form of [Second,Minute,Hour,Day,Month,Year]
-        '''
-        return  [self.second,self.minute,self.hour, self.day, self.month,self.year]
+        @datetime.setter
+        def datetime(self,datetime_raw):
+            """Checks if datetime_raw entered is valid datetime. Sets the datetime of the RTC in terms of years, months, days, hours, minutes, and seconds
 
-    @current_time.setter
-    def current_time(self,value):
-        '''
-        Set second,minute,hour,day,month and year values from RTC register
+            Args:
+                datetime_raw (string): datetime in format "%Y-%m-%d %H:%M:%S" 
 
-        Args:
-            Value: Array of 6 integers in the form of [Second,Minute,Hour,Day,Month,Year]
-
-        Raises:
-            Please enter a valid array in the format of [Second,Minute,Hour,Day,Month,Year]
-        '''
-        try:
-            if len(value) != 6: raise Exception("Please enter a valid array in the format of [Second,Minute,Hour,Day,Month,Year]")
-            self.second = value[0]
-            self.minute = value[1]
-            self.hour = value[2]
-            self.day = value[3]
-            self.month = value[4]
-            self.year = value[5]
-        except:
-            print("Unable to Set Current Time")
-
-    def _verify_date(self, time_unit, value):
-        '''
-        Verify that the value inputted is acceptable for that unit of time
-        Second: 0-60
-        Minute: 0-60
-        Hour: 0-24
-        Day: 1-28/29/30/31 (month and leap year dependent)
-        Month: 1-12
-        Year: 0-99
-
-        Args:
-            time_type: String that can take on 1 of 6 values, 'second','minute','hour','day','month','year'
-            value: Integer that must be valid
-        Raises:
-            -{value}, is an invalid second value
-            -{value}, is an invalid minute value
-            -{value}, is an invalid hour value
-            -{value}, is an invalid day value
-            -{value}, is an invalid month value
-            -{value}, is an invalid year value
-            -Time Unit: {time_unit} not valid
-        '''
-        if (time_unit == "second"):
-            if (value<0 or value>60 ): raise Exception (f"{value}, is an invalid second value")
-        elif (time_unit == "minute"):
-            if (value<0 or value>60 ): raise Exception (f"{value}, is an invalid minute value")
-        elif (time_unit == "hour"):
-            if (value<0 or value>24): raise Exception (f"{value}, is an invalid hour value")
-        elif (time_unit == "day"): # NEED TO FIX FOR ALL DAYS
-            if (value<1 or value>31): raise Exception (f"{value}, is an invalid day value")
-        elif (time_unit == "month"):
-            if (value<1 or value>12): raise Exception (f"{value}, is an invalid month value")
-        elif (time_unit == "year"):
-            if (value<0 or value>99): raise Exception (f"{value}, is an invalid year value")
-        else:
-            raise Exception (f"Time Unit: {time_unit} not valid")
+            Raises:
+                RuntimeError: _description_
+            """
+            try:
+                datetime_split = value.split('-')
+                datetime.datetime(datetime_split[0],datetime_split[1],datetime_split[2],datetime_split[3],datetime_split[4],datetime_split[5],0)
+                self._second = datetime_split[5]
+                self._minute = datetime_split[4]
+                self._hour = datetime_split[3]
+                self._day = datetime_split[2]
+                self._month = datetime_split[1]
+                self._year = datetime_split[0]
+            except:
+                raise RuntimeError(f"Unvalid datetime: {datetime_raw}")
