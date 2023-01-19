@@ -338,7 +338,7 @@ class RTC:
             Value: Integer value to set the month register to, must be an eligible month (1-12)
         '''
         try:
-            self.__verify_date("month",value)
+            self._verify_date("month",value)
             tmp_month= RTC._encode(value) | (self.i2c_bus.read_byte_data(self.registers['slave'],self.registers['month']) & 0b11100000)
             self.i2c_bus.write_byte_data(self.registers['slave'],self.registers['month'],tmp_month)
         except:
