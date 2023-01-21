@@ -20,11 +20,18 @@ class RTC:
         'second': 0x00,
         'minute': 0x01,
         'hour' : 0x02,
-        'wkday' : 0x3, #Regeister only utilized by battery
+        'wkday' : 0x3, #Register only utilized by battery
         'day' : 0x04,
         'month': 0x05,
-        'year' : 0x06,
+        'year' : 0x06
     }
+
+    @staticmethod
+    def status_verbose():
+        if self.status_code:
+            return "Unable to Communicate with Device"
+        else:
+            return "System is OK"
 
     @staticmethod
     def _encode(value):
@@ -34,14 +41,14 @@ class RTC:
             value (int): value to be encoded 
 
         Returns:
-            int: Encoded value to be used by RTC regiesters
+            int: Encoded value to be used by RTC registers
         """
         ones = value % 10
         tens = int(value / 10)
         return (tens<<4 | ones)
 
     def _check_tick(self,clock_state):
-        """Verifiy that the clock is acting im acordance to it's desired state
+        """Verify that the clock is acting im accordance to it's desired state
 
         Args:
             clock_state (bool): State of clock (0=OFF,1=ON) 
@@ -63,29 +70,30 @@ class RTC:
             else:
                 return -1
 
-    def __init__(self, battery_state, clock_state):
+    def __init__(self, battery_state, clock_state,status):
         """Initialization of RTC class
 
         Args:
             battery_state (boolean): 0 = backup battery off, 1 = backup battery on
-            clock_state (bolean): clock off, 1 = clock on 
+            clock_state (boolean): clock off, 1 = clock on 
         """
         self.battery = battery_state
         self.clock = clock_state
-
+        self.i2c_status = i2c_status
 
     def reset(self):
         """Reset the clock's time to 0:0:0 January 1 2000, battery to zero, and stop clock"""
         self.datetime = "0-1-1-0-0-0" 
         self.battery = 0 
         self.clock = 0 
+        self.i2c_status = 0
 
     @property
     def clock(self):
         """Get state of the internal oscillator of the RTC. This will control if the clock is ticking or not
 
         Returns:
-            bolean :State of clock 0 = OFF , 1 = ON
+            boolean :State of clock 0 = OFF , 1 = ON
         """
         second_raw = self.i2c_bus.read_byte_data(self.registers['slave'],self.registers['second'])
         return second_raw >> 7 #Should return a 1 or a 0 (on or off)
@@ -400,9 +408,13 @@ class RTC:
                 datetime.datetime(datetime_split[0],datetime_split[1],datetime_split[2],datetime_split[3],datetime_split[4],datetime_split[5],0)
             except:
                 raise RuntimeError(f"Invalid datetime: {datetime_raw}")
-            self._second = datetime_split[5]
-            self._minute = datetime_split[4]
-            self._hour = datetime_split[3]
-            self._day = datetime_split[2]
-            self._month = datetime_split[1]
-            self._year = datetime_split[0]
+            try:
+                self._second = datetime_split[5]
+                self._minute = datetime_split[4]
+                self._hour = datetime_split[3]
+                self._day = datetime_split[2]
+                self._month = datetime_split[1]
+                self._year = datetime_split[0]
+                self.i2c_status = 0
+            except:
+                self.i2c_status = 1
