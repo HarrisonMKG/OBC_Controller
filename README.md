@@ -9,4 +9,4 @@ Currently in developement:
 
 Upcomming:
 
--BNO055 (Orientation Sensor)
+- BNO055 (Orientation Sensor)
