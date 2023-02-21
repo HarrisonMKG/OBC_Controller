@@ -76,7 +76,14 @@ class RTC:
         Args:
             battery_state (boolean): 0 = backup battery off, 1 = backup battery on
             clock_state (boolean): clock off, 1 = clock on 
+
+        Raises:
+            RuntimeError: Initial communication failed, please verify setup.
         """
+        try:
+            self._second
+        except:
+            raise RuntimeError("Initial communication failed, please verify setup.")
         self.battery = battery_state
         self.clock = clock_state
         self.i2c_status = i2c_status
@@ -145,11 +152,11 @@ class RTC:
         """Set state of the backup battery of the RTC. This will control if the backup battery or not
 
         Args:
-            state (_type_): 0 = Turn off backup battery, 1 = Turn on backup battery 
+            state (bool): 0 = Turn off backup battery, 1 = Turn on backup battery 
 
         Raises:
-            RuntimeError: _description_
-            RuntimeError: _description_
+            RuntimeError: Invalid state: {state} 
+            RuntimeError: Unable to Set Battery
         """
         if not (state == 0 or state == 1):
             raise RuntimeError(f"Invalid state: {state}")
