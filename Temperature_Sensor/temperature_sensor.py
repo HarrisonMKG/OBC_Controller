@@ -8,8 +8,8 @@ class TEMP_SENSOR:
     Data Sheet: https://ww1.microchip.com/downloads/en/DeviceDoc/25095A.pdf
 
     Functionality:
-    - Set/Get Crtical Tempreature
-    - Get Tempreature
+    - Set/Get Critical Temperature
+    - Get Temperature
     '''
     i2c_bus = SMBus(1)
 
@@ -20,21 +20,29 @@ class TEMP_SENSOR:
         't_lower' : 0x03,
         't_crit' : 0x04,
         't_ambient' : 0x05,
-        'manufactuer_id' : 0x06,
+        'manufacture_id' : 0x06,
         'device_id' : 0x07,
         'resolution' : 0x08
     }
 
-    def __init__(self, battery_state, clock_state):
+    def __init__(self, i2c_status, crit_temperature = None, upper_temperature = None, lower_temperature = None):
         '''
-        Initiazation of RTC class
+        Initialization of RTC class
         
         Args:
             battery_state: 0 = backup battery off, 1 = backup battery on
             clock_state: 0 = clock off, 1 = clock on
         '''
-        self.battery = battery_state 
-        self.clock = clock_state 
+        if crit_temperature:
+            self.set_temperature()
+
+        if upper_temperature:
+            self.set_temperature()
+
+        if lower_temperature:
+            self.set_temperature()
+
+        self.i2c_status = i2c_status
 
     def reset(self):
         '''
@@ -55,11 +63,11 @@ class TEMP_SENSOR:
     
     def __decode_ambient(self,value):
         '''
-        Decodes register value from Tempreature Sensor ambient
-        tempreature regiester to a user readable value.  
+        Decodes register value from Temperature Sensor ambient
+        temperature register to a user readable value.  
         
         Returns:
-           Decoded ambient tempreature value 
+           Decoded ambient temperature value 
         '''
         ones = value % 10
         tens = int(value / 10)
@@ -67,11 +75,11 @@ class TEMP_SENSOR:
 
     def get_ambient_temp(self):
         '''
-        Decodes register value from tempreature Sensor ambient
+        Decodes register value from temperature Sensor ambient
         temperature register to a user readable value.  
         
         Returns:
-           Decoded ambient tempreature value 
+           Decoded ambient temperature value 
         '''
         temp_reg_data = self.i2c_bus.read_byte_data(self.registers['slave'],self.registers['t_ambient'])
         sign_bit =   temp_reg_data &  (0b1 << 12)
@@ -87,7 +95,50 @@ class TEMP_SENSOR:
         else:
             return converted_temp
 
+    def set_temperature(self, register, value):
+        '''
+        Return the decoded value of a temperature from a given register
+        '''
+        if value < 0:
+
+
+    def get_temperature(self, register):
+        '''
+        Return the decoded value of a temperature from a given register
+        '''
+        temp_reg_data = self.i2c_bus.read_i2c_block_data(self.registers['slave'],register, 2)
+        upper_byte =  temp_reg_data[0] & 0x1F
+        lower_byte = (temp_reg_data[1]) >> 4
+        if upper_byte & 0x10:
+            upper_byte = (upper_byte & 0x0F) << 4
+            return 256 - (upper_byte + lower_byte)
+        else: 
+            upper_byte = upper_byte << 4
+            return upper_byte + lower_byte
+
+    @property
+    def ambient(self):
+        return self.get_temperature(self.registers['t_ambient'])
+
+    def get_ambient_temp(self):
+        '''
+        Decodes register value from temperature Sensor ambient
+        temperature register to a user readable value.  
+        
+        Returns:
+           Decoded ambient temperature value 
+        '''
+        temp_reg_data = self.i2c_bus.read_i2c_block_data(self.registers['slave'],self.registers['t_ambient'], 2)
+        upper_byte =  temp_reg_data[0] & 0x1F
+        lower_byte = temp_reg_data[1]/16
+        if upper_byte & 0x10:
+            upper_byte = (upper_byte & 0x0F)*16
+            return 256 - (upper_byte + lower_byte)
+        else: 
+            upper_byte = upper_byte *16
+            return upper_byte + lower_byte
+
 temp_sensor = TEMP_SENSOR()
 while 1:
     time.sleep(1)
-    print(f"Current Tempreature is :{temp_sensor.get_ambient_temp()}") 
+    print(f"Current Temperature is :{temp_sensor.ambient}") 
