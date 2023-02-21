@@ -405,7 +405,6 @@ class RTC:
         """
         try:
             datetime_split = datetime_raw.split('-')
-            print(datetime_split)
             datetime_split = [int(i) for i in datetime_split]
             datetime.datetime(datetime_split[0],datetime_split[1],datetime_split[2],datetime_split[3],datetime_split[4],datetime_split[5],0)
         except:
