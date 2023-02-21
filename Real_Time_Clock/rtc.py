@@ -70,7 +70,7 @@ class RTC:
             else:
                 return -1
 
-    def __init__(self, battery_state, clock_state,status):
+    def __init__(self, battery_state, clock_state,i2c_status):
         """Initialization of RTC class
 
         Args:
@@ -120,9 +120,9 @@ class RTC:
         self.i2c_bus.write_byte_data(self.registers['slave'],self.registers['second'],clock_state)
         if (self._check_tick(state) == -1):
             if state == 0: 
-                raise RuntimeError("Clock unable to stop")
+                raise RuntimeError("Clock unable to Stop")
             if state == 1: 
-                raise RuntimeError("Clock unable to start")
+                raise RuntimeError("Clock unable to Start")
 
     @property
     def battery(self):
@@ -180,7 +180,7 @@ class RTC:
         except:
             raise RuntimeError("Unable to Get Second")
 
-    @second.setter
+    @_second.setter
     def _second(self,value):
         """Set value of second RTC register
 
@@ -213,7 +213,7 @@ class RTC:
         except:
             raise RuntimeError("Unable to Get Minute")
 
-    @minute.setter
+    @_minute.setter
     def _minute(self,value):
         """Set minute RTC register
 
@@ -246,7 +246,7 @@ class RTC:
         except:
             raise RuntimeError("Unable to Get Hour")
 
-    @hour.setter
+    @_hour.setter
     def _hour(self,value):
         """Set hour value from RTC register
 
@@ -279,7 +279,7 @@ class RTC:
         except:
             raise RuntimeError("Unable to Get Days")
 
-    @day.setter
+    @_day.setter
     def _day(self,value):
         """Set value in day RTC register 
 
@@ -324,7 +324,7 @@ class RTC:
         except:
             raise RuntimeError("Unable to Get Month")
 
-    @month.setter
+    @_month.setter
     def _month(self,value):
         """Set value of month RTC register
         1 -> January
@@ -352,69 +352,71 @@ class RTC:
         except:
             raise RuntimeError("Unable to Set Month")
 
-        @property
-        def _year(self):
-            """Get value from year RTC register
+    @property
+    def _year(self):
+        """Get value from year RTC register
 
-            Raises:
-                RuntimeError:  "Unable to Get Year"
+        Raises:
+            RuntimeError:  "Unable to Get Year"
 
-            Returns:
-                _type_: The decoded year value 
-            """
-            try:
-                year_raw = self.i2c_bus.read_byte_data(self.registers['slave'],self.registers['year'])
-                return (year_raw >> 4)*10 + (year_raw & 0b00001111) + 2000
-            except:
-                raise RuntimeError("Unable to Get Year")
+        Returns:
+            _type_: The decoded year value 
+        """
+        try:
+            year_raw = self.i2c_bus.read_byte_data(self.registers['slave'],self.registers['year'])
+            return (year_raw >> 4)*10 + (year_raw & 0b00001111) + 2000
+        except:
+            raise RuntimeError("Unable to Get Year")
 
-        @year.setter
-        def _year(self,value):
-            """Set year RTC register
+    @_year.setter
+    def _year(self,value):
+        """Set year RTC register
 
-            Args:
-                value (_type_): Integer value to set the year register to, must be eligible value (0-99 which maps to 2000-2099) 
+        Args:
+            value (_type_): Integer value to set the year register to, must be eligible value (0-99 which maps to 2000-2099) 
 
-            Raises:
-                RuntimeError: "Unable to Get Year"
-            """
-            try:
-                value -= 2000
-                self.i2c_bus.write_byte_data(self.registers['slave'],self.registers['year'],RTC._encode(value))
-            except:
-                raise RuntimeError("Unable to Get Year")
+        Raises:
+            RuntimeError: "Unable to Get Year"
+        """
+        try:
+            value -= 2000
+            self.i2c_bus.write_byte_data(self.registers['slave'],self.registers['year'],RTC._encode(value))
+        except:
+            raise RuntimeError("Unable to Get Year")
 
-        @property
-        def datetime(self):
-            """Get Current datetime from RTC
+    @property
+    def datetime(self):
+        """Get Current datetime from RTC
 
-            Returns:
-                string: datetime in format year-month-day-hour-minute-second
-            """
-            return f"{self._year}-{self._month}-{self._day}-{self._hour}-{self._minute}-{self._second}" 
+        Returns:
+            string: datetime in format year-month-day-hour-minute-second
+        """
+        return f"{self._year}-{self._month}-{self._day}-{self._hour}-{self._minute}-{self._second}" 
 
-        @datetime.setter
-        def datetime(self,datetime_raw):
-            """Checks if datetime_raw entered is valid datetime. Sets the datetime of the RTC in terms of years, months, days, hours, minutes, and seconds
+    @datetime.setter
+    def datetime(self,datetime_raw):
+        """Checks if datetime_raw entered is valid datetime. Sets the datetime of the RTC in terms of years, months, days, hours, minutes, and seconds
 
-            Args:
-                datetime_raw (string): datetime in format "%Y-%m-%d %H:%M:%S" 
+        Args:
+            datetime_raw (string): datetime in format "%Y-%m-%d %H:%M:%S" 
 
-            Raises:
-                RuntimeError: f"Invalid datetime: {datetime_raw}"
-            """
-            try:
-                datetime_split = value.split('-')
-                datetime.datetime(datetime_split[0],datetime_split[1],datetime_split[2],datetime_split[3],datetime_split[4],datetime_split[5],0)
-            except:
-                raise RuntimeError(f"Invalid datetime: {datetime_raw}")
-            try:
-                self._second = datetime_split[5]
-                self._minute = datetime_split[4]
-                self._hour = datetime_split[3]
-                self._day = datetime_split[2]
-                self._month = datetime_split[1]
-                self._year = datetime_split[0]
-                self.i2c_status = 0
-            except:
-                self.i2c_status = 1
+        Raises:
+            RuntimeError: f"Invalid datetime: {datetime_raw}"
+        """
+        try:
+            datetime_split = datetime_raw.split('-')
+            print(datetime_split)
+            datetime_split = [int(i) for i in datetime_split]
+            datetime.datetime(datetime_split[0],datetime_split[1],datetime_split[2],datetime_split[3],datetime_split[4],datetime_split[5],0)
+        except:
+            raise RuntimeError(f"Invalid datetime: {datetime_raw}")
+        try:
+            self._second = datetime_split[5]
+            self._minute = datetime_split[4]
+            self._hour = datetime_split[3]
+            self._day = datetime_split[2]
+            self._month = datetime_split[1]
+            self._year = datetime_split[0]
+            self.i2c_status = 0
+        except:
+            self.i2c_status = 1
