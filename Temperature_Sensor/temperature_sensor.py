@@ -44,16 +44,9 @@ class Temperature_Sensor:
         Reset the clock's time to zero, and battery to zero 
 
         Returns:
-            -1: The RTC was unable to be reset
-            0: The RTC was able to be reset
+            -1: The Tempreature Sensor was unable to be reset
+            0: The Tempreature Sensor was able to be reset
         '''
-        for self.rtc_register in self.registers:
-            try:
-                self.current_time = 0
-                self.battery = 0
-            except:
-               print("Unable to reset RTC") 
-               return -1
         return 0   
     
     def set_temperature(self, register, value):
