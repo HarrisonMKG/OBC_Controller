@@ -28,7 +28,7 @@ class RTC:
 
     @staticmethod
     def status_verbose():
-        if self.status_code:
+        if self.i2c_status:
             return "Unable to Communicate with Device"
         else:
             return "System is OK"
