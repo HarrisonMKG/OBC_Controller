@@ -195,7 +195,7 @@ class RTC:
             value (int): set to valid second (0-60) 
 
         Raises:
-            RuntimeError: _description_
+            RuntimeError: "Unable to Set Second"
         """
         try:
             second_encoded = self.clock << 7 | RTC._encode(value)
