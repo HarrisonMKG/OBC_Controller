@@ -6,6 +6,7 @@ Currently in developement:
 
 - MCP79410 (RTC)
 - MCP9808 (Temperature Sensor)
+- MCP3008 (ADC)
 
 Upcomming:
 
