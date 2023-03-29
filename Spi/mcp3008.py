@@ -1,20 +1,49 @@
 import time
-import SPI_Controller
+import os
+import spidev
 
 class MCP3008:
+    '''SPI interface for the ADC MCP3008 
+
+    Datasheet: https://cdn-shop.adafruit.com/datasheets/MCP3008.pdf
+
+    Features:
+        -Set ADC Channel
+        -Read ADC Channel
+    '''
 
     sample_rate = 200000
 
-    def __init__(self, spi_contoller):
-        self.spi_contoller = spi_contoller
-        self.config = spi_contoller.config['mcp3008']
-        self.chip_enable = spi_contoller['mcp3008']['chip_enable']
-        self.channels = spi_contoller.config['mcp3008']['channels']
+    def __init__(self, spi_contoller, config_path='mcp3008_config.yml'):
+        self.spi = spidev.SpiDev()
+        try:
+            self.open_yaml(mcp3008_config_path)
+        except:
+            raise Exception(f"Unable to open config file {mcp3008_config_path}")
+        self.spi.spi_mode = self.config['spi mode'] 
+        self.spi.max_speed_hz = self.config['speed'] 
+        self.spi.bus = self.config['bus']
+        self.chip_enable = self.config['chip_enable']
+        self.channels = self.config['channels']
+
+        self.spi.open(self.spi.bus,self.spi.chip_enable)
+
+    def tx_mosi(data):
+        msb = data >> 8
+        lsb = data & 0xFF
+        self.spi.xfer2([msb,lsb])
+
+    def rx_miso():
+        return self.spi.readbytes(self.sample_rate)
 
     def read_channel(channel):
         set_channel(channel)
         data = self.spi.readbytes(self.sample_rate)
         return data
+
+    def open_yaml(self, config_path='mcp3008_config.yml'):
+        with open(config_path, 'r') as file:
+            self.config = yaml.safe_load(file)
 
     def set_channel(channel):
         if(channel == 0) and self.channels[0]:
@@ -36,4 +65,4 @@ class MCP3008:
         else:
             throw ValueError(f"Channel {channel}, does not exist or is not defined.")
 
-        self.spi_contoller.send_data(channel)
+        self.tx_mosi(cmd)
