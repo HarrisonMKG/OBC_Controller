@@ -1,3 +1,6 @@
+import os
+import spidev
+
 class SPI_Controller:
 
     @staticmethod
