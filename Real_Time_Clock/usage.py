@@ -1,5 +1,5 @@
 import time
-import rtc
+from rtc import RTC
 
 my_rtc = RTC(1,1,0) # Initalize RTC
 my_rtc.datetime = "2021-2-5-0-15-34" # Set Time
