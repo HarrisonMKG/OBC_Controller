@@ -1,0 +1,11 @@
+#File for defining the functionality of the OBC_Contoller class
+-rtc:
+    battery_state:  1
+    clock_state:  1
+    i2c_status:  0
+
+-temperature_sensor:
+    i2c_status: 0
+    critical_temp: 0
+    lower_temperature: -5
+    critical_temp: 20

@@ -18,13 +18,13 @@ class OBC_Contoller:
     init_rtc():
         config = get_config()
         rtc_config = config["rtc"]
-        return RTC(rtc_config['battery_state'],rtc_config['clock_state'],rtc_config['status'])
+        return RTC(rtc_config['battery_state'],rtc_config['clock_state'],rtc_config['i2c_status'])
 
     @staticmethod
     init_temp():
         config = get_config()
         temp_config = config["temperature_sensor"]
-        return Temperature_Sensor(temp_config["status"],temp_config["critical_temp"],temp_config["upper_temperature",temp_config["lower_temperature"])
+        return Temperature_Sensor(temp_config["i2c_status"],temp_config["critical_temp"],temp_config["upper_temperature",temp_config["lower_temperature"])
 
 
     @staticmethod
