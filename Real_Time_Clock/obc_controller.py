@@ -11,17 +11,17 @@ class OBC_Contoller:
             2) Aquire telemetry from multiple devices
     """
     @staticmethod
-    get_config():
+    def get_config():
         pass
 
     @staticmethod
-    init_rtc():
+    def init_rtc():
         config = get_config()
         rtc_config = config["rtc"]
         return RTC(rtc_config['battery_state'],rtc_config['clock_state'],rtc_config['i2c_status'])
 
     @staticmethod
-    init_temp():
+    def init_temp():
         config = get_config()
         temp_config = config["temperature_sensor"]
         return Temperature_Sensor(temp_config["i2c_status"],temp_config["critical_temp"],temp_config["upper_temperature",temp_config["lower_temperature"])
