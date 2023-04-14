@@ -48,16 +48,36 @@ class Temperature_Sensor:
             0: The Tempreature Sensor was able to be reset
         '''
         return 0   
-    
+
+    @staticmethod
+    def bit_inverse(bit,binary):
+        tmp = binary >> bit
+        replacement = 1 << bit 
+
+        if tmp & 0x1: #bit to replace is a 1
+            replacement = ~replacement
+            binary &= replacement
+                
+        else: #bit to replace is a 0
+            binary |= replacement
+
+        return binary 
+
     def set_temperature(self, register, value):
         '''
         Return the decoded value of a temperature from a given register
         '''
+        upper_byte = int(value/ 16) >> 8 #isolate Upper bits
+        lower_byte = (value * 16)
+
+        if value < 0:
+            for i in range(4):
+                upper_byte = self.bit_inverse(i,upper_byte)
+            for i in range(8):
+                lower_byte = self.bit_inverse(i,lower_byte)
+            upper_byte |= 0x10 # add sign bit
         pass
-        # sign_bit = 0
-        # if value < 0:
-        #     sign_bit = 1
-        #     value * -1
+        self.i2c_bus.write_i2c_block_data(self.registers['slave'],register, [upper_byte,lower_byte])
 
     def get_temperature(self, register):
         '''
@@ -70,8 +90,24 @@ class Temperature_Sensor:
             upper_byte = (upper_byte & 0x0F) * 16
             return 256 - (upper_byte + lower_byte)
         else: 
-            upper_byte = upper_byte *16
+            upper_byte = upper_byte * 16
             return upper_byte + lower_byte
+
+    @property
+    def critcal_temp(self):
+        return self.get_temperature(self.registers['t_crit'])
+
+    @property
+    def upper_temp(self):
+        return self.get_temperature(self.registers['t_upper'])
+
+    @upper_temp.setter
+    def upper_temp(self,value):
+        self.set_temperature(self.registers['t_upper'],value)
+
+    @property
+    def lower_temp(self):
+        return self.get_temperature(self.registers['t_lower'])
 
     @property
     def ambient(self):
