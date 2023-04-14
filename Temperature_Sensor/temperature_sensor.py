@@ -65,12 +65,12 @@ class Temperature_Sensor:
         '''
         temp_reg_data = self.i2c_bus.read_i2c_block_data(self.registers['slave'],register, 2)
         upper_byte =  temp_reg_data[0] & 0x1F
-        lower_byte = (temp_reg_data[1]) >> 4
+        lower_byte = (temp_reg_data[1]) / 16
         if upper_byte & 0x10:
-            upper_byte = (upper_byte & 0x0F) << 4
+            upper_byte = (upper_byte & 0x0F) * 16
             return 256 - (upper_byte + lower_byte)
         else: 
-            upper_byte = upper_byte << 4
+            upper_byte = upper_byte *16
             return upper_byte + lower_byte
 
     @property
