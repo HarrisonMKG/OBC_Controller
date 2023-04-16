@@ -4,9 +4,10 @@ This repo is dedicated to python classes utilizing i2c communication in order fo
 
 ## Usage:
 
-1) Use `python ~/PI-OBC/obc_controller.py init` to initalize hardware.
-2) Use the command `crontab -e` and append `* * * * * python ~/PI-OBC/obc_controller.py telemetry >> logs.txt` to the file. This will have telemetry get collected each minute.
-3) Enjoy!
+1) Clone repo in home directory
+2) Use `python ~/PI-OBC/obc_controller.py init` to initalize hardware.
+3) Use the command `crontab -e` and append `* * * * * python ~/PI-OBC/obc_controller.py telemetry >> logs.txt` to the file. This will have telemetry get collected each minute.
+4) Enjoy!
 
 
 
