@@ -3,6 +3,7 @@ rtc:
     battery_state:  1
     clock_state:  1
     i2c_status:  0
+    datetime: "2023-2-5-0-15-34"
 
 temperature_sensor:
     i2c_status: 0
