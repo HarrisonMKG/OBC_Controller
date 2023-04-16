@@ -70,7 +70,7 @@ class RTC:
             else:
                 return -1
 
-    def __init__(self, battery_state, clock_state,i2c_status):
+    def __init__(self, battery_state = None, clock_state = None, i2c_status = None, datetime_value = None):
         """Initialization of RTC class
 
         Args:
@@ -84,9 +84,15 @@ class RTC:
             self._second
         except:
             raise RuntimeError("Initial communication failed, please verify setup.")
-        self.battery = battery_state
-        self.clock = clock_state
-        self.i2c_status = i2c_status
+
+        if battery_state:
+            self.battery = battery_state
+        if clock_state:
+            self.clock = clock_state
+        if i2c_status:
+            self.i2c_status = i2c_status
+        if datetime_value:
+            self.datetime = datetime_value
 
     def reset(self):
         """Reset the clock's time to 0:0:0 January 1 2000, battery to zero, and stop clock"""
