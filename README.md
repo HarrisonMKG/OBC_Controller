@@ -1,4 +1,4 @@
-# Raspberry_Pi_Hardware_Interfaces
+# OBC_Controller
 
 This repo is dedicated to python classes utilizing i2c communication in order for a raspberry pi the interact with devices with a higher level of abstraction.
 
