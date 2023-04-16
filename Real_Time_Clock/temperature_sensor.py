@@ -26,30 +26,29 @@ class Temperature_Sensor:
         'resolution' : 0x08
     }
 
-    def __init__(self, i2c_status, crit_temperature = None, upper_temperature = None, lower_temperature = None):
+    def __init__(self, i2c_status, critical_value = None, upper_value = None, lower_value = None):
         '''
         Initialization of Temperature_Sensor class
         '''
-        if crit_temperature:
-            self.set_temperature()
+        if critical_value:
+            self.critical_temp = critical_value
 
-        if upper_temperature:
-            self.set_temperature()
+        if upper_value:
+            self.upper_temp = upper_value 
 
-        if lower_temperature:
-            self.set_temperature()
+        if lower_value:
+            self.lower_temp = lower_value 
 
         self.i2c_status = i2c_status
 
     def reset(self):
         '''
-        Reset the clock's time to zero, and battery to zero 
+        Reset the temperature sensor's critical upper and lower temperatures to 0
 
-        Returns:
-            -1: The Tempreature Sensor was unable to be reset
-            0: The Tempreature Sensor was able to be reset
         '''
-        return 0   
+        self.critical_temp = 0 
+        self.upper_temp = 0 
+        self.lower_temp = 0 
 
     @staticmethod
     def bit_inverse(bit,binary):
