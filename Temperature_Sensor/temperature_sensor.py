@@ -43,13 +43,12 @@ class Temperature_Sensor:
 
     def reset(self):
         '''
-        Reset the clock's time to zero, and battery to zero 
+        Reset the temperature sensor's critical upper and lower temperatures to 0
 
-        Returns:
-            -1: The Tempreature Sensor was unable to be reset
-            0: The Tempreature Sensor was able to be reset
         '''
-        return 0   
+        self.critical_temp = 0 
+        self.upper_temp = 0 
+        self.lower_temp = 0 
 
     @staticmethod
     def bit_inverse(bit,binary):
