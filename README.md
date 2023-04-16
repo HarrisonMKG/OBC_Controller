@@ -1,6 +1,6 @@
 # PI-OBC
 
-This repo is dedicated to python classes utilizing i2c communication in order for a raspberry pi the interact with devices with a higher level of abstraction.
+This repo is dedicated to python classes utilizing i2c and spi communication in order for a raspberry pi the interact with devices with a higher level of abstraction.
 
 ## Usage:
 
