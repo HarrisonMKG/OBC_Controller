@@ -1,6 +1,6 @@
 import yaml
-from rtc import RTC 
-from temperature_sensor import Temperature_Sensor
+from Real_Time_Clock.rtc import RTC 
+from Temperature_Sensor.temperature_sensor import Temperature_Sensor
 import argparse
 
 class OBC_Controller:
