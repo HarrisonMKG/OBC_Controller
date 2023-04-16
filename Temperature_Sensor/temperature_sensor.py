@@ -26,18 +26,18 @@ class Temperature_Sensor:
         'resolution' : 0x08
     }
 
-    def __init__(self, i2c_status, crit_temperature = None, upper_temperature = None, lower_temperature = None):
+    def __init__(self, i2c_status, critical_value = None, upper_value = None, lower_value = None):
         '''
         Initialization of Temperature_Sensor class
         '''
-        if crit_temperature:
-            self.set_temperature()
+        if critical_value:
+            self.critical_temp = critical_value
 
-        if upper_temperature:
-            self.set_temperature()
+        if upper_value:
+            self.upper_temp = upper_value 
 
-        if lower_temperature:
-            self.set_temperature()
+        if lower_value:
+            self.lower_temp = lower_value 
 
         self.i2c_status = i2c_status
 
