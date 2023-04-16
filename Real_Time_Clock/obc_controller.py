@@ -37,14 +37,10 @@ class OBC_Controller:
         print(f"Time: {rtc_interface.datetime}")
         print(f"OBC Ambient Temperature: {temp_interface.ambient} °C")
 
-    def test():
-        print("hello")
-
 if __name__  == '__main__':
     FUNCTION_MAP =  {
         'telemetry': OBC_Controller.get_telemetry,
         'init': OBC_Controller.init_hardware,
-        'test' : OBC_Controller.test,
         }
     parser = argparse.ArgumentParser()
     parser.add_argument('cmd', choices=FUNCTION_MAP.keys())
