@@ -1,4 +1,4 @@
-mport time
+import time
 from smbus import SMBus
 
 class EPS:
