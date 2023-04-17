@@ -31,7 +31,7 @@ class OBC_Controller:
     def init_hardware():
         config = OBC_Controller.get_config()
         OBC_Controller.init_rtc(config)
-        OBC_Controller.init_rtc(config)
+        OBC_Controller.init_temp(config)
 
     @staticmethod
     def get_telemetry():
