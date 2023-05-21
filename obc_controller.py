@@ -2,6 +2,7 @@ import yaml
 from Real_Time_Clock.rtc import RTC 
 from Temperature_Sensor.temperature_sensor import Temperature_Sensor
 import argparse
+from STM32.stm32 import STM32
 
 class OBC_Controller:
     """This is a class to contain various fucntions and operations of the on board controller. This class is meant to be used through a CLI.
@@ -34,6 +35,21 @@ class OBC_Controller:
         OBC_Controller.init_rtc(config)
 
     @staticmethod
+    def get_comms_data():
+        config = OBC_Controller.get_config()
+        comms_board = STM32(config["comms"]["address"])
+        expected_bytes = 4
+        rx = comms_board.recieve(expected_bytes)
+        print(rx)
+
+    @staticmethod
+    def set_comms_data():
+        config = OBC_Controller.get_config()
+        comms_board = STM32(config["comms"]["address"])
+        data = [9,5,1,2]
+        comms_board.transmit(data)
+
+    @staticmethod
     def get_telemetry():
         temp_interface = Temperature_Sensor()
         rtc_interface = RTC() 
@@ -45,6 +61,8 @@ if __name__  == '__main__':
     FUNCTION_MAP =  {
         'telemetry': OBC_Controller.get_telemetry,
         'init': OBC_Controller.init_hardware,
+        'stm_tx': OBC_Controller.set_comms_data,
+        'stm_rx': OBC_Controller.get_comms_data,
         }
     parser = argparse.ArgumentParser()
     parser.add_argument('cmd', choices=FUNCTION_MAP.keys())
