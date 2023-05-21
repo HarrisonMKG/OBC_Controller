@@ -16,8 +16,8 @@ class STM32:
         self.slave_address = slave_address
 
     def transmit(self,data):
-        actual_data = data[1:]
-        print(f"Transmitting {actual_data} to address " + hex(self.slave_address))
+        print(f"Transmitting {data} to address " + hex(self.slave_address))
+        data[:0] = [self.defined_bits.get('BAD_BYTE')]
         cmd_data = [self.defined_bits.get('WRITE')]
         timeout = 0 
         while True:
