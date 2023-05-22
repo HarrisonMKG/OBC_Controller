@@ -34,7 +34,7 @@ class STM32:
         time.sleep(2)
         data = self.bus.write_i2c_block_data(self.slave_address,0x0,data)
 
-    def recieve(self,expected_bytes):
+    def receive(self,expected_bytes):
         cmd_data = [self.defined_bits.get('READ')]
         timeout = 0 
         while True:

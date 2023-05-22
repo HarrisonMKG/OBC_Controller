@@ -39,7 +39,7 @@ class OBC_Controller:
         config = OBC_Controller.get_config()
         comms_board = STM32(config["comms"]["address"])
         expected_bytes = 4
-        rx = comms_board.recieve(expected_bytes)
+        rx = comms_board.receive(expected_bytes)
         print(rx)
 
     @staticmethod
