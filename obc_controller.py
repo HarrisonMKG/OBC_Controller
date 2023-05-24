@@ -40,11 +40,16 @@ class OBC_Controller:
 
         print(f"Time: {rtc_interface.datetime}")
         print(f"OBC Ambient Temperature: {temp_interface.ambient} °C")
+    
+    @staticmethod
+    def take_pic():
+        pass 
 
 if __name__  == '__main__':
     FUNCTION_MAP =  {
-        'telemetry': OBC_Controller.get_telemetry,
         'init': OBC_Controller.init_hardware,
+        'telemetry': OBC_Controller.get_telemetry,
+        'take_picture': OBC_Controller.take_picture,
         }
     parser = argparse.ArgumentParser()
     parser.add_argument('cmd', choices=FUNCTION_MAP.keys())
