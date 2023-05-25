@@ -13,3 +13,8 @@ temperature_sensor:
 
 comms:
   address: 0x15
+  lock_pin: 5
+
+adcs:
+  address: 0x16
+  lock_pin: 6
