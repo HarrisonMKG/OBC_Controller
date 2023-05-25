@@ -11,6 +11,3 @@ void i2c_pi_handler(I2C_HandleTypeDef* hi2c, uint8_t* txBuffer,unsigned int txBu
 void bad_cmd_error();// for you to initialize
 
 void subsystem_task(int task); // for you to initialize
-
-
-
