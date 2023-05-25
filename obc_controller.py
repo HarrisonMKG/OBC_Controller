@@ -3,6 +3,7 @@ from Real_Time_Clock.rtc import RTC
 from Temperature_Sensor.temperature_sensor import Temperature_Sensor
 import argparse
 from STM32.stm32 import STM32
+from Comms.comms import Comms
 
 class OBC_Controller:
     """This is a class to contain various fucntions and operations of the on board controller. This class is meant to be used through a CLI.
@@ -46,16 +47,27 @@ class OBC_Controller:
     def set_comms_data():
         config = OBC_Controller.get_config()
         comms_board = STM32(config["comms"]["address"])
-        data = [9,5,1,2]
+        data = [9,5,1]
         comms_board.transmit(data)
+
+    def led_on():
+        comms_interface = Comms(OBC_Controller.config_path)
+        comms_interface.led_on()
+
+    def led_off():
+        comms_interface = Comms(OBC_Controller.config_path)
+        comms_interface.led_off()
 
     @staticmethod
     def get_telemetry():
         temp_interface = Temperature_Sensor()
         rtc_interface = RTC() 
+        comms_interface = Comms(OBC_Controller.config_path)
+        led_state = comms_interface.led_state()
 
         print(f"Time: {rtc_interface.datetime}")
         print(f"OBC Ambient Temperature: {temp_interface.ambient} °C")
+        print(f"Comms LED State: {led_state}")
 
 if __name__  == '__main__':
     FUNCTION_MAP =  {
@@ -63,6 +75,8 @@ if __name__  == '__main__':
         'init': OBC_Controller.init_hardware,
         'stm_tx': OBC_Controller.set_comms_data,
         'stm_rx': OBC_Controller.get_comms_data,
+        'led_on': OBC_Controller.led_on,
+        'led_off': OBC_Controller.led_off,
         }
     parser = argparse.ArgumentParser()
     parser.add_argument('cmd', choices=FUNCTION_MAP.keys())
