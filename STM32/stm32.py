@@ -26,7 +26,7 @@ class STM32:
             except:
                 time.sleep(2)
                 timeout += 1
-                if timeout > timeout_thershold:
+                if timeout > self.timeout_thershold:
                     print(Fore.RED +"WARNING: I2C Bus is likely Bad, Power Cycle to fix")
                     return
             else:
