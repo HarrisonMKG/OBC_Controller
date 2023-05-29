@@ -69,6 +69,34 @@ class OBC_Controller:
         print(f"OBC Ambient Temperature: {temp_interface.ambient} °C")
         print(f"Comms LED State: {led_state}")
 
+    @staticmethod
+    def reaction_wheel():
+        if args.power is None:
+            parser.error("Reaction Wheels must have a set power of 0 or 1")
+        elif args.power == 'on':
+            power_bit = 1
+        else: 
+            power_bit = 0
+
+        if args.speed is not None:
+            speed_bit = int(int(args.speed)/25) - 1
+        else:
+            parser.error("Reaction Wheels must have a set speed")
+
+        if args.rotation == 'cw':
+            rotation_bit = 0
+        elif args.rotation == 'ccw':
+            rotation_bit = 1
+        else:
+            parser.error("Reaction Wheels must have a set rotation direction")
+        
+        data = power_bit + (speed_bit <<1) + (rotation_bit<<3)
+        adcs_board = STM32(OBC_Controller.get_config()["adcs"]["address"])
+        adcs_board.transmit([data])
+        ret = adcs_board.receive(5)
+        print(ret)
+        
+
 if __name__  == '__main__':
     FUNCTION_MAP =  {
         'telemetry': OBC_Controller.get_telemetry,
@@ -77,9 +105,14 @@ if __name__  == '__main__':
         'stm_rx': OBC_Controller.get_comms_data,
         'led_on': OBC_Controller.led_on,
         'led_off': OBC_Controller.led_off,
+        'led_off': OBC_Controller.led_off,
+        'rwheel': OBC_Controller.reaction_wheel,
         }
     parser = argparse.ArgumentParser()
     parser.add_argument('cmd', choices=FUNCTION_MAP.keys())
+    parser.add_argument('-p', '--power', choices =['on','off'])
+    parser.add_argument('-s', '--speed', choices = ['25','50','75','100'])
+    parser.add_argument('-r', '--rotation', choices = ['cw','ccw'])
     args = parser.parse_args()
 
     func = FUNCTION_MAP[args.cmd]

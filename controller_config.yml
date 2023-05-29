@@ -11,13 +11,5 @@ temperature_sensor:
     lower_temperature: -5
     upper_temperature: 40
 
-comms:
-  address: 0x15
-  lock_pin: 5
-  cmds:
-      led_on: [0x1]
-      led_off: [0x2]
-
 adcs:
-  address: 0x16
-  lock_pin: 6
+  address: 0x15
