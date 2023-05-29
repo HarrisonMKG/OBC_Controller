@@ -22,7 +22,7 @@ class STM32:
         timeout = 0 
         while True:
             try:
-                self.bus.write_i2c_block_data(0x15,0,cmd_data)
+                self.bus.write_i2c_block_data(self.slave_address,0,cmd_data)
             except:
                 time.sleep(2)
                 timeout += 1
@@ -39,7 +39,7 @@ class STM32:
         timeout = 0 
         while True:
             try:
-                self.bus.write_i2c_block_data(0x15,0,cmd_data)
+                self.bus.write_i2c_block_data(self.slave_address,0,cmd_data)
             except:
                 time.sleep(2)
                 timeout += 1 
