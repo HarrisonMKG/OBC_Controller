@@ -16,6 +16,7 @@ This repo is dedicated to python classes utilizing i2c and spi communication in 
 - MCP79410 (RTC)
 - MCP9808 (Temperature Sensor)
 - MCP3008 (ADC)
+- STM32
 
 ## Upcomming:
 

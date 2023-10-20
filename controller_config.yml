@@ -10,3 +10,6 @@ temperature_sensor:
     critical_temperature: 0
     lower_temperature: -5
     upper_temperature: 40
+
+adcs:
+  address: 0x15
