@@ -14,8 +14,11 @@ class OBC_Controller:
 
     @staticmethod
     def get_config():
-        with open(OBC_Controller.config_path, 'r') as file:
-            return yaml.safe_load(file)
+        try:
+            with open(OBC_Controller.config_path, 'r') as file:
+                return yaml.safe_load(file)
+        except:
+            Exception(f"Unable to open {OBC_Controller.config_path}")
 
     @staticmethod
     def init_rtc(config):
@@ -31,7 +34,7 @@ class OBC_Controller:
     def init_hardware():
         config = OBC_Controller.get_config()
         OBC_Controller.init_rtc(config)
-        OBC_Controller.init_rtc(config)
+        OBC_Controller.init_temp(config)
 
     @staticmethod
     def get_telemetry():
